@@ -1,0 +1,4 @@
+*.qmlproject.user
+/info/
+/status-go/
+/tmp/

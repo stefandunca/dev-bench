@@ -1,0 +1,3 @@
+module DebugStatus
+
+DebugWindow 0.1 DebugWindow.qml

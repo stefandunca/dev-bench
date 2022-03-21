@@ -1,0 +1,35 @@
+/* QML project file to be used with QtCreator for QML testing */
+
+import QmlProject 1.1
+
+Project {
+    mainFile: "./debug-helpers/status-desktop/TestStatusDesktop.qml"
+
+    /* Include .qml, .js, and image files from current directory and subdirectories */
+    QmlFiles {
+        directory: "./StatusQ/src/"
+    }
+    QmlFiles {
+        directory: "./debug-helpers/statusq/"
+    }
+
+//    JavaScriptFiles {
+//        directory: "."
+//    }
+//    ImageFiles {
+//        directory: "."
+//    }
+//    Files {
+//        filter: "*.ts"
+//        directory: "i18n"
+//    }
+
+    /* List of plugin directories passed to QML runtime */
+    importPaths: [
+        "./debug-helpers/",
+        "./status-desktop/ui/imports",
+        "./status-desktop/ui/app",
+        "./status-desktop/ui/StatusQ/src/",
+        "./debug-helpers/status-desktop/"
+    ]
+}
