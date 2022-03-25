@@ -1,4 +1,11 @@
+# Ignore project folders
+
+/StatusQ/
+/status-desktop/
+
 *.qmlproject.user
+CMakeLists.txt.user
+.qt_for_python
 /info/
 /status-go/
 /tmp/

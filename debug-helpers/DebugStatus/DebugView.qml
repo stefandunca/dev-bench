@@ -1,18 +1,15 @@
 import QtQuick 2.14
 import QtQuick.Controls 2.14
-import QtQuick.Window 2.14
 import QtQuick.Layouts 1.14
 
 import Qt.labs.folderlistmodel 2.3
 
-Window {
-    width: mainLayout.implicitWidth
-    height: mainLayout.implicitHeight
+Item {
+    implicitWidth: mainLayout.implicitWidth
+    implicitHeight: mainLayout.implicitHeight
 
     property string testFolder: "."
     property string initialTest: ""
-
-    visible: true
 
     FolderListModel {
         id: filesModel

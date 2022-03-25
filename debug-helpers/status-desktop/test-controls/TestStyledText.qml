@@ -3,14 +3,14 @@ import QtQuick.Controls 2.14
 import QtQuick.Window 2.14
 
 import shared.panels 1.0
-import AppLayouts.Profile.popups 1.0
-import "../dummies/local_account_sensitive_settings.nim.js" as LocalAccountSensitiveSettings
+import utils 1.0
+import StatusQ.Core.Utils 0.1 as StatusQUtils
 
 Item {
-    anchors.fill: parent
+    implicitWidth: (replyText.implicitWidth < 400 ? replyText.implicitHeight : 400) * 1.2
+    implicitHeight: replyText.implicitHeight * 1.2
 
-    property var localAccountSensitiveSettings: LocalAccountSensitiveSettings
-
+    Component.onCompleted: replyText.font.family
 
     Rectangle {
         anchors.left: parent.left
@@ -25,22 +25,19 @@ Item {
 
         StyledText {
             id: replyText
-            // text: Utils.getMessageWithStyle(Utils.linkifyAndXSS(StatusQUtils.Emoji.parse(message)), false)
-            //text: '<style type="text/css">img, a, del, code, blockquote { margin: 0; padding: 0; }code {font-family: Roboto Mono;font-weight: 400;font-size: 14;padding: 2px 4px;border-radius: 4px;background-color: #eef2f5;color: #000000;white-space: pre;}p {line-height: 22px;}a {color: #4360df;}a.mention {color: #0da4c9;background-color: #1a07bce9;text-decoration: none;padding: 0px 2px;}del {text-decoration: line-through;}table.blockquote td {padding-left: 10px;color: #939ba1;}table.blockquote td.quoteline {background-color: #939ba1;height: 100%;padding-left: 0;}.emoji {vertical-align: bottom;}span.isEdited {color: #939ba1;margin-left: 5px}</style><p>Text here <img alt="😪" src width="18" height="18" /><img alt="😪" src width="18" height="18" /><img alt="😑" src width="18" height="18" /><img alt="🤔" src width="18" height="18" /><img alt="☺️" src width="18" height="18" /><img alt="😉" src width="18" height="18" /> <img alt="😍" src width="18" height="18" /></p>'
+            readonly property string message: '<p>take some emojis 😪😪😑☺️😉 😍?</p>'
             text: {
-                return `<html>`+
-                `<head>`+
-                    `<style type="text/css">`+
-                    `a {`+
-                        `color: black;`+
-                        `text-decoration: none;`+
-                    `}`+
-                    `</style>`+
-                `</head>`+
-                `<body>`+
-                    '<style type="text/css">img, a, del, code, blockquote { margin: 0; padding: 0; }code {font-family: Roboto Mono;font-weight: 400;font-size: 14;padding: 2px 4px;border-radius: 4px;background-color: #eef2f5;color: #000000;white-space: pre;}p {line-height: 22px;}a {color: #4360df;}a.mention {color: #0da4c9;background-color: #1a07bce9;text-decoration: none;padding: 0px 2px;}del {text-decoration: line-through;}table.blockquote td {padding-left: 10px;color: #939ba1;}table.blockquote td.quoteline {background-color: #939ba1;height: 100%;padding-left: 0;}.emoji {vertical-align: bottom;}span.isEdited {color: #939ba1;margin-left: 5px}</style><p>Text here <img alt="😪" src width="18" height="18" /><img alt="😪" src width="18" height="18" /><img alt="😑" src width="18" height="18" /><img alt="🤔" src width="18" height="18" /><img alt="☺️" src width="18" height="18" /><img alt="😉" src width="18" height="18" /> <img alt="😍" src width="18" height="18" /></p>'+
-                `</body>`+
-            `</html>`;
+                console.debug(`@dd orig msg "${message}"`)
+
+                const linkified = Utils.linkifyAndXSS(message)
+                console.debug(`@dd linkified "${linkified}"`)
+                const parsedEmoji = StatusQUtils.Emoji.parse(linkified)
+                //const parsedEmoji = '<img class="emoji" draggable="false" alt="😪" src="file:///C:/Users/stefan/proj/status/status-desktop/ui/StatusQ/src/assets/twemoji/svg/1f62a.svg?svg" width="18" height="18" style="vertical-align: top"/>'
+                console.debug(`@dd parsedEmoji "${parsedEmoji}"`)
+                const finalText = Utils.getMessageWithStyle(parsedEmoji, false)
+                //const finalText = Utils.getMessageWithStyle(parsedEmoji, false) // Ignore XSS;
+                console.debug(`@dd finalText "${finalText}"`)
+                return finalText
             }
             anchors.fill: parent
             elide: Text.ElideRight
