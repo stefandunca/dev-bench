@@ -6,6 +6,8 @@ import DebugStatus 0.1
 Window {
     title: qsTr("Debug Status Desktop")
 
+    x: 300
+    y: 100
     width: debugView.implicitWidth
     height: debugView.implicitHeight
 
@@ -16,6 +18,6 @@ Window {
         anchors.fill: parent
 
         testFolder: `${Qt.resolvedUrl(".")}/test-controls/`
-        initialTest: "TestProfileHeader.qml"
+        initialTest: "TestCommunityEditSettingsPanel.qml"
     }
 }

@@ -36,7 +36,7 @@ Item {
             displayName: popup.userDisplayName
             pubkey: popup.userPublicKey
             icon: popup.isCurrentUser ? popup.profileStore.icon : popup.userIcon
-            isIdenticon: popup.isCurrentUser ? popup.profileStore.isIdenticon : popup.isUserIconIdenticon
+            //isIdenticon: popup.isCurrentUser ? popup.profileStore.isIdenticon : popup.isUserIconIdenticon
 
             displayNameVisible: false
             pubkeyVisible: false
@@ -74,7 +74,7 @@ Item {
             displayName: popup.userDisplayName
             pubkey: popup.userPublicKey
             icon: popup.isCurrentUser ? popup.profileStore.icon : popup.userIcon
-            isIdenticon: popup.isCurrentUser ? popup.profileStore.isIdenticon : popup.isUserIconIdenticon
+            //isIdenticon: popup.isCurrentUser ? popup.profileStore.isIdenticon : popup.isUserIconIdenticon
 
             displayNameVisible: false
             pubkeyVisible: false

@@ -9,3 +9,4 @@ CMakeLists.txt.user
 /info/
 /status-go/
 /tmp/
+build*/

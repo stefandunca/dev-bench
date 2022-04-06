@@ -10,6 +10,10 @@ int main(int argc, char *argv[])
 #endif
     QGuiApplication app(argc, argv);
 
+    app.setOrganizationName("Dev");
+    app.setOrganizationDomain("dev.com");
+    app.setApplicationName("Test Dev");
+
     QQmlApplicationEngine engine;
 
     engine.addImportPath("./debug-helpers/");
@@ -25,7 +29,7 @@ int main(int argc, char *argv[])
     });
     engine.load("./debug-helpers/status-desktop/dummies/utils.nim.qml");
 
-    const QUrl url(QStringLiteral("./debug-helpers/status-desktop/TestStatusDesktop.qml"));
+    const QUrl url("./debug-helpers/status-desktop/TestStatusDesktop.qml");
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
                      &app, [url](QObject *obj, const QUrl &objUrl) {
         if (!obj && url == objUrl)
