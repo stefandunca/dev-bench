@@ -2,6 +2,7 @@
 
 /StatusQ/
 /status-desktop/
+/secondary/
 
 *.qmlproject.user
 CMakeLists.txt.user

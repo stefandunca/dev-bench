@@ -8,4 +8,12 @@ QtObject {
     function getEmojiHashAsJson() {
         return '["🦪", "🙏", "☘️", "👩‍🎤", "💇🏼‍♂️", "👩🏾‍✈️", "💛", "👩🏾‍🏭", "🏄🏾‍♂️", "⏳", "🤦🏽‍♀️", "💂🏽", "👐🏾", "👊🏾"]'
     }
+
+    function getColorId(publicKey) {
+        return '4'
+    }
+
+    function getCompressedPk(publicKey) {
+        return 'zQ3shtLezsYnu39WMUngvyt78m9jFWaMLZFxGjKQqdzZ8C8rG'
+    }
 }

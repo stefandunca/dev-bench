@@ -16,8 +16,8 @@ import StatusQ.Popups 0.1
 Item {
     id: popup
 
-    implicitWidth: mainLayout.implicitWidth
-    implicitHeight: mainLayout.implicitHeight
+    implicitWidth: 400
+    implicitHeight: 300
 
     property string userPublicKey: "0x332db32a32d3bd2a32d32da3bd123d2"
     property string userDisplayName: "Test Display Name"
@@ -29,81 +29,86 @@ Item {
         "isIdenticon": true
     })
 
-    RowLayout {
-        id: mainLayout
+    ProfileHeader {
+        id: firstTestControl
+        x: 0
+        y: 0
 
-        ProfileHeader {
-            displayName: popup.userDisplayName
-            pubkey: popup.userPublicKey
-            icon: popup.isCurrentUser ? popup.profileStore.icon : popup.userIcon
-            //isIdenticon: popup.isCurrentUser ? popup.profileStore.isIdenticon : popup.isUserIconIdenticon
+        displayName: popup.userDisplayName
+        pubkey: popup.userPublicKey
+        icon: popup.isCurrentUser ? popup.profileStore.icon : popup.userIcon
+        //isIdenticon: popup.isCurrentUser ? popup.profileStore.isIdenticon : popup.isUserIconIdenticon
 
-            displayNameVisible: false
-            pubkeyVisible: false
+        displayNameVisible: false
+        pubkeyVisible: false
 
-            emojiSize: Qt.size(20,20)
-            imageWidth: 80
-            imageHeight: 80
-            supersampling: false
+        //emojiSize: Qt.size(20,20)
+        //imageWidth: 80
+        //imageHeight: 80
+        //supersampling: false
 
-            imageOverlay: Item {
-                visible: popup.isCurrentUser
+        imageOverlay: Item {
+            visible: popup.isCurrentUser
 
-                StatusFlatRoundButton {
-                    width: 24
-                    height: 24
+            StatusFlatRoundButton {
+                width: 24
+                height: 24
 
-                    anchors {
-                        right: parent.right
-                        bottom: parent.bottom
-                        rightMargin: -8
-                    }
-
-                    type: StatusFlatRoundButton.Type.Secondary
-                    icon.name: "pencil"
-                    icon.color: Theme.palette.directColor1
-                    icon.width: 12.5
-                    icon.height: 12.5
-
-                    onClicked: Global.openChangeProfilePicPopup()
+                anchors {
+                    right: parent.right
+                    bottom: parent.bottom
+                    rightMargin: -8
                 }
+
+                type: StatusFlatRoundButton.Type.Secondary
+                icon.name: "pencil"
+                icon.color: Theme.palette.directColor1
+                icon.width: 12.5
+                icon.height: 12.5
+
+                onClicked: Global.openChangeProfilePicPopup()
             }
         }
+    }
 
-        ProfileHeader {
-            displayName: popup.userDisplayName
-            pubkey: popup.userPublicKey
-            icon: popup.isCurrentUser ? popup.profileStore.icon : popup.userIcon
-            //isIdenticon: popup.isCurrentUser ? popup.profileStore.isIdenticon : popup.isUserIconIdenticon
+    ProfileHeader {
+        // ProfileHeader implementation is broken
+        //x: firstTestControl.width + 10
+        x: 120.7
+        y: 0.4
 
-            displayNameVisible: false
-            pubkeyVisible: false
+        displayName: popup.userDisplayName
+        pubkey: popup.userPublicKey
+        icon: popup.isCurrentUser ? popup.profileStore.icon : popup.userIcon
+        //isIdenticon: popup.isCurrentUser ? popup.profileStore.isIdenticon : popup.isUserIconIdenticon
 
-            emojiSize: Qt.size(20,20)
-            imageWidth: 80
-            imageHeight: 80
+        displayNameVisible: false
+        pubkeyVisible: false
 
-            imageOverlay: Item {
-                visible: popup.isCurrentUser
+        //emojiSize: Qt.size(20,20)
+        //imageWidth: 80
+        //imageHeight: 80
 
-                StatusFlatRoundButton {
-                    width: 24
-                    height: 24
+        imageOverlay: Item {
+            visible: popup.isCurrentUser
 
-                    anchors {
-                        right: parent.right
-                        bottom: parent.bottom
-                        rightMargin: -8
-                    }
+            StatusFlatRoundButton {
+                width: 24
+                height: 24
 
-                    type: StatusFlatRoundButton.Type.Secondary
-                    icon.name: "pencil"
-                    icon.color: Theme.palette.directColor1
-                    icon.width: 12.5
-                    icon.height: 12.5
-
-                    onClicked: Global.openChangeProfilePicPopup()
+                anchors {
+                    right: parent.right
+                    bottom: parent.bottom
+                    rightMargin: -8
                 }
+
+                type: StatusFlatRoundButton.Type.Secondary
+                icon.name: "pencil"
+                icon.color: Theme.palette.directColor1
+                icon.width: 12.5
+                icon.height: 12.5
+
+                onClicked: Global.openChangeProfilePicPopup()
             }
         }
     }
