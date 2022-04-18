@@ -1,8 +1,20 @@
 import DebugStatus 0.1
 
-DebugWindow {
-    title: qsTr("Debug StatusQ")
+import QtQuick 2.14
+import QtQuick.Window 2.14
 
-    testFolder: `${Qt.resolvedUrl(".")}/test-controls/`
-    initialTest: "TestStatusInput"
+Window {
+    x: 100
+    y: 100
+    width: 640
+    height: 480
+
+    visible: true
+
+    title: qsTr("Hello World")
+
+    DebugView {
+        testFolder: `${Qt.resolvedUrl(".")}/test-controls/`
+        initialTest: "TestStatusImageCropPanel.qml"
+    }
 }
