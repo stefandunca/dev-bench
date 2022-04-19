@@ -17,7 +17,7 @@ Item {
         anchors.fill: parent
 
         StatusImageCropPanel {
-            id: bannerPreview
+            id: testControl
 
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -37,6 +37,16 @@ Item {
                 text: "Interactive"
                 checked: false
             }
+            Text { text: aspectRatioControl.from }
+            Slider {
+                id: aspectRatioControl
+                from: 0.5
+                to: 5
+                value: testControl.aspectRatio
+                live: false
+                onMoved: testControl.aspectRatio = valueAt(visualPosition)
+            }
+            Text { text: aspectRatioControl.to }
         }
     }
 
@@ -48,6 +58,6 @@ Item {
         property alias interactive: interactiveCheckBox.checked
         property rect cropRect
 
-        //Component.onCompleted: bannerPreview.setCropRect(cropRect)
+        Component.onCompleted: testControl.setCropRect(cropRect)
     }
 }
