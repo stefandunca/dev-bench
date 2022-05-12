@@ -20,7 +20,8 @@ Item {
         closePolicy: Popup.CloseOnEscape
         modal: false
 
-        onProfileImageReady: {
+
+        onSetProfileImage: {
 
         }
     }
@@ -29,14 +30,14 @@ Item {
         id: dataProfilePicPopup
 
         visible: true
-        selectedImage: testImageData
+        currentProfileImg: testImageData
 
         x: uploadProfilePicPopup.width + 20
         y: 42
         closePolicy: Popup.CloseOnEscape
         modal: false
 
-        onProfileImageReady: {
+        onSetProfileImage: {
 
         }
     }
