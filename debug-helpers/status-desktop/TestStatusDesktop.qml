@@ -18,6 +18,6 @@ Window {
         anchors.fill: parent
 
         testFolder: `${Qt.resolvedUrl(".")}/test-controls/`
-        initialTest: "TestStatusTagSelector.qml"
+        initialTest: "TestCommunityOverviewSettingsPanel.qml"
     }
 }

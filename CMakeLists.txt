@@ -12,6 +12,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 list(APPEND QML_DIRS
     "${CMAKE_CURRENT_SOURCE_DIR}/debug-helpers/"
+    "${CMAKE_CURRENT_SOURCE_DIR}/debug-helpers/test-controls"
     "${CMAKE_CURRENT_SOURCE_DIR}/debug-helpers/status-desktop/"
     "${CMAKE_CURRENT_SOURCE_DIR}/status-desktop/ui/imports"
     "${CMAKE_CURRENT_SOURCE_DIR}/status-desktop/ui/app"

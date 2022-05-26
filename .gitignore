@@ -11,3 +11,5 @@ CMakeLists.txt.user
 /status-go/
 /tmp/
 build*/
+
+.DS_Store
