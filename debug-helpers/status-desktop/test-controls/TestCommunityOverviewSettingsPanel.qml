@@ -8,13 +8,16 @@ Item {
     implicitWidth: 600
     implicitHeight: 800
 
+    property bool logoLoaded: false
+    property bool bannerLoaded: false
+
     CommunityOverviewSettingsPanel {
         anchors.fill: parent
 
         name: "Community Name"
         description: "Community description"
-        logoImageData: FirstTestImageData.thumbnailData
-        bannerImageData: FirstTestImageData.bannerData
+        logoImageData: logoLoaded ? FirstTestImageData.thumbnailData : ""
+        bannerImageData: bannerLoaded ? FirstTestImageData.bannerData : ""
         color: "fuchsia"
         editable: true
         owned: true
@@ -36,6 +39,8 @@ Item {
                 ${historyArchiveSupportToggle},
                 false
             )`)
+            logoLoaded = logoLoaded || item.logoImagePath.toString().length > 0
+            bannerLoaded = bannerLoaded || item.bannerPath.toString().length > 0
         }
     }
 }
