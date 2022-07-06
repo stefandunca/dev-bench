@@ -1,0 +1,21 @@
+version: "3"
+services:
+  # From sources dir run
+  #   - build: `docker-compose --file ../debug-helpers/ci/docker-compose.yml build`
+  #   - run:
+  #      - conan: `conan install project/ --profile=project/vendor/conan-configs/linux.ini -s build_type=Release --build=missing -if=build/conan  -of=build`
+  #      - generate: `qt-cmake project -G Ninja -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=build/conan/conan_home/.conan/data/gtest/1.11.0/_/_/package/521ce6d2b56041e08ea425948717819429cfbc29/`
+  #      - build: `cmake --build build`
+  #    - alternative: `conan build project/ --build-folder=build/conan`
+  linux-ci:
+    image: linux-build-local
+    # asumes sources as project-directory
+    build:
+      context: ci/cpp/
+      dockerfile: Dockerfile-linux
+    container_name: linux-build
+    volumes:
+      #- ../../status-desktop:/home/user/project:ro
+      # Workaround to status-go in source build requirements
+      - ../../status-desktop:/home/user/project:rw
+      - ../../status-desktop/build-linux:/home/user/build:rw

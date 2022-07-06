@@ -3,7 +3,9 @@
 /StatusQ/
 /status-desktop/
 /secondary/
+/dogfooding/
 
+.vscode
 *.qmlproject.user
 CMakeLists.txt.user
 .qt_for_python
