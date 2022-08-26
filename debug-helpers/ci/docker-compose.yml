@@ -1,14 +1,17 @@
 version: "3"
 services:
   # From sources dir run
-  #   - build: `docker-compose --file ../debug-helpers/ci/docker-compose.yml build`
-  #   - run:
+  #   - build: `docker-compose --file ../debug-helpers/ci/docker-compose.yml --env-file ../debug-helpers/ci/env build`
+  #   - run: `docker-compose --file ../debug-helpers/ci/docker-compose.yml --env-file ../debug-helpers/ci/env run -ti linux-ci`
   #      - conan: `conan install project/ --profile=project/vendor/conan-configs/linux.ini -s build_type=Release --build=missing -if=build/conan  -of=build`
-  #      - generate: `qt-cmake project -G Ninja -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=build/conan/conan_home/.conan/data/gtest/1.11.0/_/_/package/521ce6d2b56041e08ea425948717819429cfbc29/`
+  #      - generate: `qt-cmake project -G Ninja -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/home/user/build/conan/conan_toolchain.cmake`
   #      - build: `cmake --build build`
-  #    - alternative: `conan build project/ --build-folder=build/conan`
+  #      - collect: `linuxdeploy --plugin qt --executable=build/status-desktop --appdir build/AppDir --desktop-file=project/status.desktop --icon-file=project/status.svg --custom-apprun=project/AppRun-cpp`
+  #      - install: `cmake --install build --prefix=build/install`
+  #      - cp: `cp build/install/lib/* build/AppDir/usr/lib/`
   linux-ci:
     image: linux-build-local
+    user: $UID:$GID
     # asumes sources as project-directory
     build:
       context: ci/cpp/

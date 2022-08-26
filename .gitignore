@@ -2,15 +2,23 @@
 
 /StatusQ/
 /status-desktop/
+/status-go/
 /secondary/
 /dogfooding/
 
+# Data folders
+/test-data/
+
+# Personal
+/architecture/
+/debugging/
+
+# Others
 .vscode
 *.qmlproject.user
 CMakeLists.txt.user
 .qt_for_python
 /info/
-/status-go/
 /tmp/
 build*/
 

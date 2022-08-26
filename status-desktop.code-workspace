@@ -1,0 +1,34 @@
+{
+	"folders": [
+		{
+			"path": "status-desktop"
+		},
+		{
+			"path": "status-desktop/vendor/status-go"
+		}
+	],
+	"settings": {
+		"workbench.colorCustomizations": {
+			"activityBar.activeBackground": "#510010",
+			"activityBar.activeBorder": "#198000",
+			"activityBar.background": "#510010",
+			"activityBar.foreground": "#e7e7e7",
+			"activityBar.inactiveForeground": "#e7e7e799",
+			"activityBarBadge.background": "#198000",
+			"activityBarBadge.foreground": "#e7e7e7",
+			"sash.hoverBorder": "#510010",
+			"statusBar.background": "#1e0006",
+			"statusBar.foreground": "#e7e7e7",
+			"statusBarItem.hoverBackground": "#510010",
+			"statusBarItem.remoteBackground": "#1e0006",
+			"statusBarItem.remoteForeground": "#e7e7e7",
+			"titleBar.activeBackground": "#1e0006",
+			"titleBar.activeForeground": "#e7e7e7",
+			"titleBar.inactiveBackground": "#1e000699",
+			"titleBar.inactiveForeground": "#e7e7e799",
+			"commandCenter.border": "#e7e7e799"
+		},
+		"peacock.color": "#1e0006",
+		"git.ignoreLimitWarning": true
+	}
+}
