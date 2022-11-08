@@ -1,7 +1,7 @@
 {
 	"folders": [
 		{
-			"path": "status-desktop/vendor/status-go"
+			"path": "status-go"
 		}
 	],
 	"settings": {
@@ -24,6 +24,11 @@
 			"titleBar.inactiveBackground": "#350d1c99",
 			"titleBar.inactiveForeground": "#e7e7e799"
 		},
-		"peacock.color": "#350d1c"
+		"peacock.color": "#350d1c",
+		"cSpell.words": [
+			"metadatas",
+			"metas",
+			"protobuf"
+		]
 	}
 }
