@@ -39,7 +39,14 @@
       "./libs/**": true
     },
     "cSpell.words": [
-      "Upsert"
+      "balancehistory",
+      "calib",
+      "Flickable",
+      "hexutil",
+      "statustypes",
+      "thirdparty",
+      "Upsert",
+      "walletevent"
     ]
   }
 }
