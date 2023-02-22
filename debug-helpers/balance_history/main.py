@@ -13,20 +13,30 @@ parser.add_argument('--filter-count-less-than', type=int, default=0, help='Filte
 parser.add_argument('--filter-block-len-less-than', type=float, default=0, help='Filter out addresses with average block length less than this value')
 parser.add_argument('--filter-address', type=str, help='Filter out addresses with less than this block length')
 parser.add_argument('--print-address', action='store_true', help='Print the address')
+parser.add_argument('--hash-password-uppercase', action='store_true', help='Has the password uppercase for old desktop version data', dest='hash_uppercase')
 
 args = parser.parse_args()
 
 if args.file:
     file_path = args.file
+
 if args.password:
-    hex_pass = hash_password(args.password)
+    hex_pass = hash_password(args.password, args.hash_uppercase)
+
 filter_count_less_than: int = args.filter_count_less_than
 filter_block_len_less_than: float = args.filter_block_len_less_than
 
 filter_address: str = ""
 if args.filter_address:
     filter_address = args.filter_address
+
 print_address: bool = args.print_address
+
+# Constants
+
+target_block_len_seconds = 12
+
+# Process the database
 
 db = open_db(file_path, hex_pass)
 
@@ -92,13 +102,13 @@ ident_str = ""
 for chain, chain_data in data.items():
     print(f'- {chain_to_name(chain)}')
     for currency, currency_data in chain_data.items():
-        print(f' - {currency}')
+        print(f'  - {currency}')
         for address, address_data in currency_data.items():
             str_address: str = address_to_hex(address)
             if len(filter_address) > 0 and not str_address.lower().find(filter_address.lower()) > 0:
                 continue
             if print_address:
-                print(f'  - {str_address}')
+                print(f'    - {str_address}')
             for flag, stats in address_data.items():
                 if filter_block_len_less_than == 0 or stats.avg_block_len_sec() <= filter_block_len_less_than:
-                    print(f'  {" " if print_address else "" }- {stats} flag: {flag_to_str(flag)}')
+                    print(f'    {"  " if print_address else "" }- {stats} flag: {flag_to_str(flag)}')

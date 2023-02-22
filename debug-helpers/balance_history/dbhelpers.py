@@ -3,7 +3,7 @@ import sqlcipher3
 import sha3
 
 def open_db(file_path, password):
-    db = sqlcipher3.connect(file_path)
+    db = sqlcipher3.connect(file_path, uri=True)
 
     db.execute(f'PRAGMA key = "{password}"')
     db.execute('PRAGMA cipher_page_size = 1024')

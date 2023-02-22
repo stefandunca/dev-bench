@@ -39,6 +39,7 @@
       "./libs/**": true
     },
     "cSpell.words": [
+      "Arbitrum",
       "balancehistory",
       "calib",
       "Flickable",
