@@ -32,7 +32,7 @@ if args.filter_address:
 
 print_address: bool = args.print_address
 
-# Constants
+# Globals
 
 target_block_len_seconds = 12
 
@@ -58,9 +58,15 @@ class Stats:
         return f'{self.count:>5} BLen[{self.avg_block_len_sec():<5.3}s] BC[{self.last_block - self.first_block:>9}] {{{dt.strftime(self.first_date, "%d.%m.%Y")} - {dt.strftime(self.last_date, "%d.%m.%Y")}}} {{{self.first_block:>10} {self.last_block:>10}}}'
 
     def avg_block_len_sec(self) -> float:
-        return (self.last_date - self.first_date).total_seconds()/(self.last_block - self.first_block)
+        blocks = self.last_block - self.first_block
+        return (self.last_date - self.first_date).total_seconds()/blocks if blocks else 0
 
 data = dict()
+
+cursor = db.execute(f'SELECT Count(*) FROM balance_history')
+count_entries = cursor.fetchone()[0]
+print(f'Total of [{count_entries}] balance entries in DB')
+
 for chain in chains:
     for currency in currencies:
         for address in addresses:

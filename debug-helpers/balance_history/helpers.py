@@ -11,9 +11,10 @@ chain_numbers = {
     4: 'Rinkeby',
     5: 'Goerli',
     10: 'Optimism',
-    420: 'Optimism Testnet',
+    420: 'Optimism Goerli',
     42161: 'Arbitrum',
-    421611: 'Arbitrum Testnet',
+    421611: 'Arbitrum Rinkeby',
+    421613: 'Arbitrum Goerli',
 }
 
 def flag_to_str(flag):
@@ -30,4 +31,4 @@ def address_to_hex(address):
     return '0x' + binascii.b2a_hex(address).decode('utf-8').upper()
 
 def chain_to_name(chain):
-    return chain_numbers[chain]
+    return chain_numbers[chain] if chain in chain_numbers else f'Chain {chain}'
