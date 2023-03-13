@@ -44,6 +44,7 @@
       "calib",
       "Flickable",
       "hexutil",
+      "rowid",
       "statustypes",
       "thirdparty",
       "Upsert",
