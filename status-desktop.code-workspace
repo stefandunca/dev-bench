@@ -42,10 +42,12 @@
       "Arbitrum",
       "balancehistory",
       "calib",
+      "counterparty",
       "Flickable",
       "hexutil",
       "rowid",
       "statustypes",
+      "testutils",
       "thirdparty",
       "Upsert",
       "walletevent"
