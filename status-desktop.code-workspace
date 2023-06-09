@@ -39,18 +39,22 @@
       "./libs/**": true
     },
     "cSpell.words": [
+      "appdatabase",
       "Arbitrum",
       "balancehistory",
       "calib",
       "counterparty",
       "Flickable",
       "hexutil",
+      "keypairs",
       "rowid",
       "statustypes",
+      "Subtransaction",
       "testutils",
       "thirdparty",
       "Upsert",
-      "walletevent"
+      "walletevent",
+      "Wrapf"
     ]
   }
 }
