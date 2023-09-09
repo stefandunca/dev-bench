@@ -22,5 +22,6 @@ CMakeLists.txt.user
 /info/
 /tmp/
 build*/
+tools/.*
 
 .DS_Store
