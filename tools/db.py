@@ -21,8 +21,9 @@ auth = [init_opt, sqlcipher_info]
 @click.option('--show-timestamp', is_flag=True, help='Show raw timestamps instead of formated dates')
 @click.option('--full-addr', is_flag=True, help='Show full addresses of the form"0x..."')
 @click.option('--print-query', is_flag=True, help='Print query before execution')
+@click.option('--table/--no-table', is_flag=True, default=True, help='Table formatting')
 @click.pass_context
-def cli(ctx, limit, offset, exc_simple, show_timestamp, full_addr, print_query):
+def cli(ctx, limit, offset, exc_simple, show_timestamp, full_addr, print_query, table):
     ctx.ensure_object(dict)
 
     if ctx.invoked_subcommand != 'setup':
@@ -38,7 +39,8 @@ def cli(ctx, limit, offset, exc_simple, show_timestamp, full_addr, print_query):
             config = json.load(f)
         if 'db' not in config:
             raise click.ClickException(f"Broken configuration. Check file {config_file}")
-        ctx.obj['PARAMS'] = ["--table", ro_opt, config['db'], *auth]
+        ctx.obj['PARAMS'] = [ro_opt, config['db'], *auth]
+        ctx.obj['PRETTY'] = table
 
 def get_window(ctx):
     return f"LIMIT {ctx.obj['LIMIT']} OFFSET {ctx.obj['OFFSET']}"
@@ -51,45 +53,114 @@ def get_where(ctx, owner):
 def get_order_by(ctx):
     return "ORDER BY timestamp DESC"
 
-def get_query(ctx, columns, table, owner="address"):
+def get_select(ctx, columns, table, owner="address"):
     return f"SELECT {columns} FROM {table} {get_where(ctx, owner)} {get_order_by(ctx)} {get_window(ctx)};"
 
 def timestamp(column, ctx, as_=None):
     base = column if ctx.obj['TIMESTAMP'] else f"datetime({column}, 'unixepoch')"
     return f"{base} {f' AS {as_}' if as_ else ''}"
 
-def addr(column, ctx, as_=None):
+def addr(column, ctx, as_=None, might_be_null=False):
     base = f"'0x' || HEX({column})" if ctx.obj['FULL_ADDR'] else f"SUBSTR(HEX({column}), 1, 3) || '...' || SUBSTR(HEX({column}), -3, 3)"
+    if might_be_null:
+        base = f"CASE WHEN {column} IS NULL THEN 'NULL' ELSE {base} END"
     return f"{base}{f' AS {as_}' if as_ else ''}"
 
-def exec_sql(ctx, query):
+
+from io import BytesIO
+import sys
+import string
+import base64
+
+def exec_sql(ctx, query, pretty_overwrite=None):
     params = ctx.obj['PARAMS']
+
+    if (ctx.obj['PRETTY'] if pretty_overwrite is None else pretty_overwrite):
+        params.append('--table')
+
     params.append(query)
+
 
     if ctx.obj['PRINT_QUERY']:
         print(f'SQL Query:\n"{query}"\n\n')
-    print(sh.sqlcipher(*params))
+
+    run_extra = {'_out': click.get_text_stream('stdout'), '_err': click.get_text_stream('stderr')}
+    sh.sqlcipher(*params, **run_extra)
 
 @cli.command(help="List transfers table")
 @click.pass_context
 def list_trs(ctx):
-    exec_sql(ctx, get_query(ctx, f"multi_transaction_id as MtID, {addr('tx_from_address', ctx, 'from_')}, {addr('tx_to_address', ctx, 'to_')}, {timestamp('timestamp', ctx, 'dt')}, {addr('tx_hash', ctx, 'hash')}, {addr('address', ctx, 'addr')}, {addr('hash', ctx, 'has_id')}", "transfers"))
+    exec_sql(ctx, get_select(ctx, f"multi_transaction_id as MtID, {addr('tx_from_address', ctx, 'from_')}, {addr('tx_to_address', ctx, 'to_')}, {timestamp('timestamp', ctx, 'dt')}, {addr('tx_hash', ctx, 'hash')}, {addr('address', ctx, 'addr')}, {addr('hash', ctx, 'has_id')}", "transfers"))
 
 @cli.command(help="List pending_transactions table")
 @click.pass_context
 def list_pending(ctx):
-    exec_sql(ctx, get_query(ctx, f"multi_transaction_id AS MtID, {addr('from_address', ctx, 'from_')}, {addr('to_address', ctx, 'to_')}, {timestamp('timestamp', ctx, 'dt')}, {addr('hash', ctx, 'hash')}, type, status, auto_delete AS del, network_id AS chain", "pending_transactions"))
+    exec_sql(ctx, get_select(ctx, f"multi_transaction_id AS MtID, {addr('from_address', ctx, 'from_')}, {addr('to_address', ctx, 'to_')}, {timestamp('timestamp', ctx, 'dt')}, {addr('hash', ctx, 'hash')}, type, status, auto_delete AS del, network_id AS chain", "pending_transactions"))
 
 @cli.command(help="List multi_transactions table")
 @click.pass_context
 def list_mt(ctx):
-    exec_sql(ctx, get_query(ctx, f"ROWID AS MtID, {addr('from_address', ctx, 'from_')}, {addr('to_address', ctx, 'to_')}, {timestamp('timestamp', ctx, 'dt')}, type", "multi_transactions", "from_address"))
+    exec_sql(ctx, get_select(ctx, f"ROWID AS MtID, {addr('from_address', ctx, 'from_')}, {addr('to_address', ctx, 'to_')}, {timestamp('timestamp', ctx, 'dt')}, type", "multi_transactions", "from_address"))
+
+@cli.command(help="Join transfers and multi_transactions tables")
+@click.pass_context
+def list_transfers(ctx):
+    exec_sql(ctx, f"""
+        SELECT
+            {addr('multi_transactions.from_asset', ctx, 'fromTk', True)},
+            {addr('multi_transactions.to_asset', ctx, 'toTk', True)},
+            {addr('multi_transactions.from_address', ctx, 'from_', True)},
+            {addr('multi_transactions.to_address', ctx, 'to_', True)},
+            CASE WHEN transfers.multi_transaction_id = 0 THEN 'None' ELSE transfers.multi_transaction_id END as MTID,
+            {timestamp('multi_transactions.timestamp', ctx, 'dt')},
+            COUNT(transfers.multi_transaction_id) AS trs,
+            SUBSTR(HEX(tx_hash), 0, 7) AS tx_hash,
+            {addr('transfers.tx_hash', ctx, 'tx_hash', True)}
+        FROM
+            transfers
+        LEFT JOIN
+            multi_transactions ON multi_transactions.ROWID = transfers.multi_transaction_id
+        GROUP BY
+            transfers.multi_transaction_id
+        ORDER BY
+            MIN(transfers.timestamp) DESC
+        {get_window(ctx)};""")
 
 @cli.command(help="Execute query")
 @click.argument('query', nargs=1, type=click.UNPROCESSED)
 @click.pass_context
 def exec(ctx, query):
     exec_sql(ctx, query)
+
+@cli.command(help="Count rows")
+@click.argument('table-name', nargs=1, type=click.UNPROCESSED)
+@click.option('--distinct-column', default=None, help='Count distinct values of column')
+@click.pass_context
+def count(ctx, table_name, distinct_column):
+    distinct = f"COUNT(DISTINCT({distinct_column}))" if distinct_column else None
+    exec_sql(ctx, f"SELECT {'COUNT(*)' if distinct is None else distinct} FROM {table_name};", pretty_overwrite=False)
+
+@cli.command(help="Show columns")
+@click.argument('table-name', nargs=1, type=click.UNPROCESSED)
+@click.option('--create-table', is_flag=True, help='Focus on columns')
+@click.pass_context
+def table_info(ctx, table_name, create_table):
+    if create_table:
+        exec_sql(ctx, f"SELECT sql FROM sqlite_master WHERE type='table' AND name='{table_name}';")
+    else:
+        exec_sql(ctx, f"PRAGMA table_info({table_name});")
+
+@cli.command(help="List indexes")
+@click.argument('table-name', nargs=1, type=click.UNPROCESSED)
+@click.pass_context
+def indexes(ctx, table_name):
+    exec_sql(ctx, f"PRAGMA index_list({table_name});")
+
+@cli.command(help="Index info")
+@click.argument('index-name', nargs=1, type=click.UNPROCESSED)
+@click.pass_context
+def index(ctx, index_name):
+    exec_sql(ctx, f"PRAGMA index_info({index_name});")
 
 @cli.command(help="Generate config and authentication file")
 @click.password_option()
