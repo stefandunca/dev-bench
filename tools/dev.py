@@ -47,17 +47,20 @@ def get_out(log_file_path):
         print(line.strip())
     return {"_out": custom_tee, "_err_to_out":True,}
 
+status_go_tags="gowaku_no_rln,gowaku_skip_migrations"
+
 @cli.command(help="Run wallet tests")
-@click.option('--activity', '-u', is_flag=True, help="Update docker image")
+@click.option('--test_dir', '-d', help="Test directory to run e.g. --test_dir './services/wallet/activity/...'")
 @click.option('--log_file', '-l', default='~/proj/status/tmp/status-go-tests.log', help="Out log file path")
 @click.option('--append/--no-append', default=False, help="Clear log file")
 @click.option('--track', '-t', is_flag=True, help="Use nodemon to track file changes and rerun tests")
 @click.option('--ext' , default='*.go,*.sql', help="File extensions to track")
+@click.option('--run', '-r', default=None, help="Run tests matching")
 @click.pass_obj
-def test(obj: CtxObject, activity, log_file, append, track, ext):
+def test(obj: CtxObject, test_dir, log_file, append, track, ext, run):
     test_dirs = []
-    if activity:
-        test_dirs = ['./services/wallet/activity/...']
+    if test_dir:
+        test_dirs = [test_dir]
     else:
         test_dirs = [   './services/wallet/...',
                         './transactions/...',
@@ -72,16 +75,21 @@ def test(obj: CtxObject, activity, log_file, append, track, ext):
         with open(log_file, 'w') as f:
             pass
 
+    run_opt = []
+    if run:
+        run_opt = ['-run', run]
+
+    proj_path = os.path.join(obj.config.project_path, 'vendor/status-go')
     cmd = sh.go.test.bake('-v',
-        *test_dirs, **get_out(log_file), tags="gowaku_skip_migrations",
-        _cwd=os.path.join(obj.config.project_path, 'vendor/status-go'))
+        *test_dirs, *run_opt, **get_out(log_file), tags=status_go_tags,
+        _cwd=proj_path)
 
 
     if track:
         cmd_str = str(cmd) + f" 2>&1 | tee {log_file} || exit 1"
-        sh.nodemon('--ext', ext, "--exec", cmd_str, **std_out)
+        sh.nodemon('--ext', ext, "--exec", cmd_str, **std_out, _cwd=proj_path)
     else:
-        cmd()
+        cmd(**std_out)
 
 import re
 import time
@@ -119,7 +127,7 @@ def benchmark(obj: CtxObject, bench, record, summary):
         out = {'_out': parse_perf, '_err': click.get_text_stream('stderr')}
 
     sh.go.test('-v', "./services/wallet/activity/...", benchtime='10x', run='^$', bench=bench, *extras,
-        tags="gowaku_skip_migrations", **out,
+        tags=status_go_tags, **out,
         _cwd=os.path.join(obj.config.project_path, 'vendor/status-go'))
 
     if record:
@@ -131,18 +139,26 @@ def benchmark(obj: CtxObject, bench, record, summary):
         with open(os.path.expanduser(summary), 'w') as f:
             f.write(f"# Activity filter optimizations\n\n")
 
-            headers = [k for k, _ in sorted(history.items(), key=lambda x: x[1]['timestamp'])]
-
+            columns = [k for k, _ in sorted(history.items(), key=lambda x: x[1]['timestamp'])]
             benchmarks = {}
-            for header in headers:
-                for res in history[header]["results"]:
+            for column in columns:
+                for res in history[column]["results"]:
                     name = res["bench"]
                     if name not in benchmarks:
                         benchmarks[name] = [name.split("/")[-1]]
-                    benchmarks[name].append(res["ns"])
 
-            headers = ["Name", *headers]
-            data = [headers, *benchmarks.values()]
+            for column in columns:
+                for bench in benchmarks.keys():
+                    entry = '-'
+                    for res in history[column]["results"]:
+                        name = res["bench"]
+                        if name == bench:
+                            entry = res["ns"]
+                            break
+                    benchmarks[bench].append(entry)
+
+            columns = ["Name", *columns]
+            data = [columns, *benchmarks.values()]
             markdown_table = tabulate(data, headers="firstrow", tablefmt="pipe")
             f.write(markdown_table)
             f.write("\n")
