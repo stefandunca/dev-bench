@@ -54,10 +54,14 @@ status_go_tags="gowaku_no_rln,gowaku_skip_migrations"
 @click.option('--log_file', '-l', default='~/proj/status/tmp/status-go-tests.log', help="Out log file path")
 @click.option('--append/--no-append', default=False, help="Clear log file")
 @click.option('--track', '-t', is_flag=True, help="Use nodemon to track file changes and rerun tests")
+@click.option('--watch', '-w', is_flag=True, help="Run test in a loop until it fails")
 @click.option('--ext' , default='*.go,*.sql', help="File extensions to track")
 @click.option('--run', '-r', default=None, help="Run tests matching")
 @click.pass_obj
-def test(obj: CtxObject, test_dir, log_file, append, track, ext, run):
+def test(obj: CtxObject, test_dir, log_file, append, track, ext, run, watch):
+    if watch and track:
+        raise Exception("Cannot use --watch and --track at the same time")
+
     test_dirs = []
     if test_dir:
         test_dirs = [test_dir]
@@ -85,9 +89,11 @@ def test(obj: CtxObject, test_dir, log_file, append, track, ext, run):
         _cwd=proj_path)
 
 
+    cmd_str = str(cmd) + f" 2>&1 | tee {log_file} || exit 1"
     if track:
-        cmd_str = str(cmd) + f" 2>&1 | tee {log_file} || exit 1"
         sh.nodemon('--ext', ext, "--exec", cmd_str, **std_out, _cwd=proj_path)
+    elif watch:
+        sh.watch('--interval', '2', '--errexit', cmd_str, **std_out, _cwd=proj_path)
     else:
         cmd(**std_out)
 
