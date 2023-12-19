@@ -22,7 +22,8 @@ def save_config(config: Config):
 
 @click.group()
 @click.pass_context
-def cli(ctx):
+@click.option('--project_path', '-p', default=None, help="Override project path in config")
+def cli(ctx, project_path):
     # Setup context object
     obj = CtxObject
     if os.path.exists(config_file):
@@ -30,6 +31,10 @@ def cli(ctx):
     else:
         obj.config = Config(project_path=os.path.expanduser(f"{script_dir}/../status-desktop"))
         save_config(obj.config)
+
+    if project_path is not None:
+        obj.config.project_path = os.path.abspath(os.path.expanduser(project_path))
+        echo(f"Project path overwritten to {obj.config.project_path}")
 
     ctx.obj = obj
 
@@ -49,7 +54,7 @@ def get_out(log_file_path):
 
 status_go_tags="gowaku_no_rln,gowaku_skip_migrations"
 
-@cli.command(help="Run wallet tests")
+@cli.command(help="Run wallet tests or any tests in 'test_dir'")
 @click.option('--test_dir', '-d', help="Test directory to run e.g. --test_dir './services/wallet/activity/...'")
 @click.option('--log_file', '-l', default='~/proj/status/tmp/status-go-tests.log', help="Out log file path")
 @click.option('--append/--no-append', default=False, help="Clear log file")
@@ -89,11 +94,15 @@ def test(obj: CtxObject, test_dir, log_file, append, track, ext, run, watch):
         _cwd=proj_path)
 
 
-    cmd_str = str(cmd) + f" 2>&1 | tee {log_file} || exit 1"
+    cmd_str = str(cmd) + f" 2>&1 | tee {log_file}"
+    exec_count = 0
     if track:
         sh.nodemon('--ext', ext, "--exec", cmd_str, **std_out, _cwd=proj_path)
     elif watch:
-        sh.watch('--interval', '2', '--errexit', cmd_str, **std_out, _cwd=proj_path)
+        while True:
+            exec_count += 1
+            echo(f"Iteration [{exec_count}]\n")
+            cmd(**std_out)
     else:
         cmd(**std_out)
 
