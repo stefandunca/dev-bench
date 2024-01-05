@@ -22,8 +22,9 @@ auth = [init_opt, sqlcipher_info]
 @click.option('--full-addr', is_flag=True, help='Show full addresses of the form"0x..."')
 @click.option('--print-query', is_flag=True, help='Print query before execution')
 @click.option('--table/--no-table', is_flag=True, default=True, help='Table formatting')
+@click.option('--write/--read-only', is_flag=True, default=False, help='Writable DB')
 @click.pass_context
-def cli(ctx, limit, offset, exc_simple, show_timestamp, full_addr, print_query, table):
+def cli(ctx, limit, offset, exc_simple, show_timestamp, full_addr, print_query, table, write):
     ctx.ensure_object(dict)
 
     if ctx.invoked_subcommand != 'setup':
@@ -39,7 +40,7 @@ def cli(ctx, limit, offset, exc_simple, show_timestamp, full_addr, print_query, 
             config = json.load(f)
         if 'db' not in config:
             raise click.ClickException(f"Broken configuration. Check file {config_file}")
-        ctx.obj['PARAMS'] = [ro_opt, config['db'], *auth]
+        ctx.obj['PARAMS'] = ([ro_opt] if not write else []) + [config['db'], *auth]
         ctx.obj['PRETTY'] = table
 
 def get_window(ctx):
