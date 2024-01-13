@@ -48,6 +48,7 @@
       "calib",
       "concat",
       "counterparty",
+      "dont",
       "ethrpc",
       "Flickable",
       "hexutil",
