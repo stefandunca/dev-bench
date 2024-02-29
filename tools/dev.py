@@ -62,8 +62,9 @@ status_go_tags="gowaku_no_rln,gowaku_skip_migrations"
 @click.option('--watch', '-w', is_flag=True, help="Run test in a loop until it fails")
 @click.option('--ext' , default='*.go,*.sql', help="File extensions to track")
 @click.option('--run', '-r', default=None, help="Run tests matching")
+@click.option('--no-cache', is_flag=True, help="Disable test caching")
 @click.pass_obj
-def test(obj: CtxObject, test_dir, log_file, append, track, ext, run, watch):
+def test(obj: CtxObject, test_dir, log_file, append, track, ext, run, watch, no_cache):
     if watch and track:
         raise Exception("Cannot use --watch and --track at the same time")
 
@@ -87,6 +88,9 @@ def test(obj: CtxObject, test_dir, log_file, append, track, ext, run, watch):
     run_opt = []
     if run:
         run_opt = ['-run', run]
+
+    if no_cache:
+        run_opt.append('-count=1')
 
     proj_path = os.path.join(obj.config.project_path, 'vendor/status-go')
     cmd = sh.go.test.bake('-v',
