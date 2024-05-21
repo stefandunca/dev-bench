@@ -41,6 +41,7 @@
     "cSpell.words": [
       "appdatabase",
       "Arbitrum",
+      "Backpressure",
       "balancehistory",
       "caip",
       "Caip",
@@ -55,6 +56,7 @@
       "IDDB",
       "importmap",
       "keypairs",
+      "mainnets",
       "mixedcase",
       "MTID",
       "multiaccounts",
@@ -68,6 +70,7 @@
       "rpcfilters",
       "sectionmocks",
       "selc",
+      "Sepolia",
       "SQLDB",
       "Srvc",
       "statusq",
@@ -77,11 +80,18 @@
       "testutils",
       "thirdparty",
       "txns",
+      "typeof",
+      "upsert",
       "Upsert",
       "walletconnect",
       "walletevent",
       "wcommon",
       "Wrapf"
-    ]
+    ],
+    "files.associations": {
+      "*.out": "log",
+      "*.moc": "cpp"
+    },
+    "svg.preview.background": "dark-transparent"
   }
 }

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import sh
 import click
-import glob
 import json
 import os
 from dataclasses import dataclass
@@ -37,6 +36,8 @@ def cli(ctx, project_path):
         echo(f"Project path overwritten to {obj.config.project_path}")
 
     ctx.obj = obj
+
+    echo(f"Project path: {obj.config.project_path}")
 
     # No command, run default
     if ctx.invoked_subcommand is None:

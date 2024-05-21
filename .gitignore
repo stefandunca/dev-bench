@@ -8,6 +8,9 @@
 /dogfooding/
 /walletconnect/
 
+# System
+venv/
+
 # Data folders
 /test-data/
 

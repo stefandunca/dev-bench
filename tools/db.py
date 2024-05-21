@@ -11,7 +11,9 @@ import os
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 sqlcipher_info = f"{script_dir}/.db_auth-v4.info"
-default_config_file = f"{script_dir}/.main-config.json"
+default_wallet_config_file = f"{script_dir}/.main-config.json"
+default_app_config_file = f"{script_dir}/.main-app-config.json"
+app_commands = ['accounts']
 
 init_opt = '--init'
 ro_opt = '--readonly'
@@ -25,14 +27,15 @@ auth = [init_opt, sqlcipher_info]
 @click.option('--exc-simple', is_flag=True, help='Exclude addresses like "0x000..."')
 @click.option('--show-timestamp', is_flag=True, help='Show raw timestamps instead of formated dates')
 @click.option('--full-addr', is_flag=True, help='Show full addresses of the form"0x..."')
+@click.option('--no-elide', is_flag=True, help='Do not elide long columns')
 @click.option('--print-query', is_flag=True, help='Print query before execution')
 @click.option('--table/--no-table', is_flag=True, default=True, help='Table formatting')
 @click.option('--json', "json_out", is_flag=True, default=False, help='JSON output')
 @click.option('--md', "markdown_out", is_flag=True, default=False, help='JSON output')
 @click.option('--write/--read-only', is_flag=True, default=False, help='Writable DB')
-@click.option('--config', default=default_config_file, help='Config file')
+@click.option('--config', default=None, help='Config file')
 @click.pass_context
-def cli(ctx, limit, offset, exc_simple, show_timestamp, full_addr, print_query, table, write, json_out, markdown_out, config):
+def cli(ctx, limit, offset, exc_simple, show_timestamp, full_addr, no_elide, print_query, table, write, json_out, markdown_out, config):
     ctx.ensure_object(dict)
 
     if ctx.invoked_subcommand != 'setup':
@@ -41,9 +44,15 @@ def cli(ctx, limit, offset, exc_simple, show_timestamp, full_addr, print_query, 
         ctx.obj['EXCLUDE'] = exc_simple
         ctx.obj['TIMESTAMP'] = show_timestamp
         ctx.obj['FULL_ADDR'] = full_addr
+        ctx.obj['NO_ELIDE'] = no_elide
         ctx.obj['PRINT_QUERY'] = print_query
 
         config_file = ""
+        if config is None:
+            if ctx.invoked_subcommand in app_commands:
+                config = default_app_config_file
+            else:
+                config = default_wallet_config_file
         if config:
             config_file = os.path.normpath(os.path.join(script_dir, config))
         ctx.obj['CONFIG_FILE'] = config_file
@@ -66,23 +75,38 @@ def get_window(ctx):
     return f"LIMIT {ctx.obj['LIMIT']} OFFSET {ctx.obj['OFFSET']}"
 
 
-def get_where(ctx, owner):
+def get_where_trs(ctx, owner):
     if ctx.obj['EXCLUDE']:
         return f"WHERE HEX({owner}) NOT LIKE '000%'"
     return ""
 
 
-def get_order_by(ctx):
-    return "ORDER BY timestamp DESC"
+def get_order_by(column):
+    return f"ORDER BY {column} DESC" if column else ""
 
 
-def get_select(ctx, columns, table, owner="address"):
-    return f"SELECT {columns} FROM {table} {get_where(ctx, owner)} {get_order_by(ctx)} {get_window(ctx)};"
+def get_select_trs(ctx, columns, table, owner="address", order_column="timestamp"):
+    return f"SELECT {columns} FROM {table} {get_where_trs(ctx, owner)} {get_order_by(order_column)} {get_window(ctx)};"
 
 
 def timestamp(column, ctx, as_=None):
     base = column if ctx.obj['TIMESTAMP'] else f"datetime({column}, 'unixepoch')"
     return f"{base} {f' AS {as_}' if as_ else ''}"
+
+
+def column(column, as_=None):
+    return f"{column} {f' AS {as_}' if as_ else ''}"
+
+
+def elide_column(column, ctx, as_=None, might_be_null=True, length=3):
+    base = ""
+    if ctx.obj['NO_ELIDE']:
+        base = column
+    else:
+        base = f"SUBSTR({column}, 1, {length}) || '...' || SUBSTR({column}, -{length}, {length})"
+    if might_be_null:
+        base = f"CASE WHEN {column} IS NULL THEN 'NULL' ELSE {base} END"
+    return f"{base}{f' AS {as_ if as_ else column}'}"
 
 
 def addr(column, ctx, as_=None, might_be_null=False):
@@ -113,25 +137,65 @@ def exec_sql(ctx, query, pretty_overwrite=None):
     sh.sqlcipher(*params, **run_extra)
 
 
+@cli.command(help="List wallet connect sessions")
+@click.option('-a', '--all', is_flag=True, default=False, help='Show all columns')
+@click.option('-i', '--info-only', is_flag=True, default=False, help='Show only app info')
+@click.option('-d', '--dapps-only', is_flag=True, default=False, help='Show only dapps list')
+@click.pass_context
+def wc(ctx, all, info_only, dapps_only):
+    main_columns = []
+
+    if not dapps_only:
+        if not info_only:
+            main_columns = ["dapps.name AS name", timestamp(
+                'sessions.expiry', ctx, 'dt'), "sessions.active", elide_column("sessions.pairing_topic", ctx, "pairing")]
+        extra_columns = []
+        if all or info_only:
+            extra_columns = [column("sessions.session_json", "json"), column(
+                "dapp_url", "url"), column("dapps.icon_url", "icon")]
+        columns = [elide_column("sessions.topic", ctx, "topic")
+                   ] + main_columns + extra_columns
+    else:
+        columns = [column("dapps.name", "name"), column("dapps.url", "url"), elide_column(
+            "dapps.icon_url", ctx, "icon"), column("count(sessions.topic)", "sessions")]
+
+    query_str = f"""SELECT {", ".join(columns)} FROM wallet_connect_dapps AS dapps
+                    {"JOIN" if dapps_only else "LEFT JOIN"} wallet_connect_sessions
+                        AS sessions ON dapps.url = sessions.dapp_url
+                        {"GROUP BY dapps.url" if dapps_only else ""}
+                    {get_order_by("expiry")}
+                    {get_window(ctx)};
+                """
+
+    exec_sql(ctx, query_str)
+
+
 @cli.command(help="List transfers table")
 @click.pass_context
 def list_trs(ctx):
-    exec_sql(ctx, get_select(
+    exec_sql(ctx, get_select_trs(
         ctx, f"multi_transaction_id as MtID, {addr('tx_from_address', ctx, 'from_')}, {addr('tx_to_address', ctx, 'to_')}, {timestamp('timestamp', ctx, 'dt')}, {addr('tx_hash', ctx, 'hash')}, {addr('address', ctx, 'addr')}, {addr('hash', ctx, 'has_id')}", "transfers"))
 
 
 @cli.command(help="List pending_transactions table")
 @click.pass_context
 def list_pending(ctx):
-    exec_sql(ctx, get_select(
+    exec_sql(ctx, get_select_trs(
         ctx, f"multi_transaction_id AS MtID, {addr('from_address', ctx, 'from_')}, {addr('to_address', ctx, 'to_')}, {timestamp('timestamp', ctx, 'dt')}, {addr('hash', ctx, 'hash')}, type, status, auto_delete AS del, network_id AS chain", "pending_transactions"))
 
 
 @cli.command(help="List multi_transactions table")
 @click.pass_context
 def list_mt(ctx):
-    exec_sql(ctx, get_select(
+    exec_sql(ctx, get_select_trs(
         ctx, f"ROWID AS MtID, {addr('from_address', ctx, 'from_')}, {addr('to_address', ctx, 'to_')}, {timestamp('timestamp', ctx, 'dt')}, type", "multi_transactions", "from_address"))
+
+
+@cli.command(help="List wallet accounts")
+@click.pass_context
+def accounts(ctx):
+    exec_sql(
+        ctx, f"SELECT acc.name, {addr('address', ctx, 'addr')}, keypairs.name as kp_name FROM keypairs_accounts as acc LEFT JOIN keypairs ON keypairs.key_uid=acc.key_uid WHERE operable='fully' AND acc.removed=0 AND chat=0 ORDER BY position ASC;")
 
 
 @cli.command(help="Join transfers and multi_transactions tables")
@@ -150,7 +214,6 @@ def list_transfers(ctx, join_mt):
         """
     else:
         join_clause = "ORDER BY transfers.timestamp DESC"
-
 
     exec_sql(ctx, f"""
         SELECT
