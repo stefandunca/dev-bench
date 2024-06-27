@@ -10,15 +10,12 @@ import json
 import os
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
-sqlcipher_info = f"{script_dir}/.db_auth-v4.info"
 default_wallet_config_file = f"{script_dir}/.main-config.json"
 default_app_config_file = f"{script_dir}/.main-app-config.json"
 app_commands = ['accounts']
 
 init_opt = '--init'
 ro_opt = '--readonly'
-
-auth = [init_opt, sqlcipher_info]
 
 
 @click.group()
@@ -34,8 +31,11 @@ auth = [init_opt, sqlcipher_info]
 @click.option('--md', "markdown_out", is_flag=True, default=False, help='JSON output')
 @click.option('--write/--read-only', is_flag=True, default=False, help='Writable DB')
 @click.option('--config', default=None, help='Config file')
+@click.option('--explain', is_flag=True, help='Explain query')
+@click.option('--explain-plan', is_flag=True, help='Explain query plan')
+@click.option('--auth-info', default=f"{script_dir}/.db_auth-v4.info", help='SQLCipher setup file')
 @click.pass_context
-def cli(ctx, limit, offset, exc_simple, show_timestamp, full_addr, no_elide, print_query, table, write, json_out, markdown_out, config):
+def cli(ctx, limit, offset, exc_simple, show_timestamp, full_addr, no_elide, print_query, table, write, json_out, markdown_out, config, explain, explain_plan, auth_info):
     ctx.ensure_object(dict)
 
     if ctx.invoked_subcommand != 'setup':
@@ -46,6 +46,8 @@ def cli(ctx, limit, offset, exc_simple, show_timestamp, full_addr, no_elide, pri
         ctx.obj['FULL_ADDR'] = full_addr
         ctx.obj['NO_ELIDE'] = no_elide
         ctx.obj['PRINT_QUERY'] = print_query
+        ctx.obj['EXPLAIN'] = explain
+        ctx.obj['EXPLAIN_PLAN'] = explain_plan
 
         config_file = ""
         if config is None:
@@ -64,6 +66,7 @@ def cli(ctx, limit, offset, exc_simple, show_timestamp, full_addr, no_elide, pri
             raise click.ClickException(
                 f"Broken configuration. Check file {config_file}")
         ctx.obj['CONFIG_OBJ'] = config_obj
+        auth = [init_opt, auth_info]
         ctx.obj['PARAMS'] = ([ro_opt] if not write else []
                              ) + [config_obj['db'], *auth]
         ctx.obj['PRETTY'] = table
@@ -127,6 +130,11 @@ def exec_sql(ctx, query, pretty_overwrite=None):
         if (ctx.obj['PRETTY']):
             params.append('--table')
 
+    if ctx.obj['EXPLAIN_PLAN']:
+        query = f"explain query plan {query}"
+    elif ctx.obj['EXPLAIN']:
+        query = f"explain {query}"
+
     params.append(query)
 
     if ctx.obj['PRINT_QUERY']:
@@ -145,19 +153,19 @@ def exec_sql(ctx, query, pretty_overwrite=None):
 def wc(ctx, all, info_only, dapps_only):
     main_columns = []
 
-    if not dapps_only:
+    if dapps_only:
+        columns = [column("dapps.name", "name"), column("dapps.url", "url"), elide_column(
+            "dapps.icon_url", ctx, "icon"), column("(count(sessions.topic) - sum(sessions.disconnected))", "active_ses"), column("count(sessions.topic)", "ses")]
+    else:
         if not info_only:
             main_columns = ["dapps.name AS name", timestamp(
-                'sessions.expiry', ctx, 'dt'), "sessions.active", elide_column("sessions.pairing_topic", ctx, "pairing")]
+                'sessions.expiry', ctx, 'dt'), "sessions.disconnected AS disc", elide_column("sessions.pairing_topic", ctx, "pairing")]
         extra_columns = []
         if all or info_only:
             extra_columns = [column("sessions.session_json", "json"), column(
-                "dapp_url", "url"), column("dapps.icon_url", "icon")]
+                "dapp_url", "url"), column("dapps.icon_url", "icon"), "test_chains AS test"]
         columns = [elide_column("sessions.topic", ctx, "topic")
                    ] + main_columns + extra_columns
-    else:
-        columns = [column("dapps.name", "name"), column("dapps.url", "url"), elide_column(
-            "dapps.icon_url", ctx, "icon"), column("count(sessions.topic)", "sessions")]
 
     query_str = f"""SELECT {", ".join(columns)} FROM wallet_connect_dapps AS dapps
                     {"JOIN" if dapps_only else "LEFT JOIN"} wallet_connect_sessions
@@ -171,10 +179,20 @@ def wc(ctx, all, info_only, dapps_only):
 
 
 @cli.command(help="List transfers table")
+@click.option('-e', '--extended', is_flag=True, default=False, help='Show more columns')
 @click.pass_context
-def list_trs(ctx):
-    exec_sql(ctx, get_select_trs(
-        ctx, f"multi_transaction_id as MtID, {addr('tx_from_address', ctx, 'from_')}, {addr('tx_to_address', ctx, 'to_')}, {timestamp('timestamp', ctx, 'dt')}, {addr('tx_hash', ctx, 'hash')}, {addr('address', ctx, 'addr')}, {addr('hash', ctx, 'has_id')}", "transfers"))
+def list_trs(ctx, extended):
+    columns = ["multi_transaction_id as MtID",
+              f"{addr('tx_from_address', ctx, 'from_')}",
+              f"{addr('tx_to_address', ctx, 'to_')}",
+              f"{timestamp('timestamp', ctx, 'dt')}",
+              f"{addr('tx_hash', ctx, 'hash')}",
+              f"{addr('address', ctx, 'addr')}",
+              f"{addr('hash', ctx, 'has_id')}"]
+    if extended:
+        columns += ["tx_type"]
+    columns_str = ", ".join(columns)
+    exec_sql(ctx, get_select_trs(ctx, columns_str, "transfers"))
 
 
 @cli.command(help="List pending_transactions table")
